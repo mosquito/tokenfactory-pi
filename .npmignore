@@ -1,0 +1,22 @@
+# Source files
+*.ts
+!*.d.ts
+
+# Build output - keep dist files
+# dist/
+
+# IDE
+.idea/
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Other
+.DS_Store
+*.log
+.env
+.env.*
+node_modules/
+npm-debug.log*

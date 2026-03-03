@@ -1,0 +1,46 @@
+{
+  "name": "tokenfactory-pi",
+  "version": "0.2.4",
+  "description": "Nebius Token Factory provider extension for pi coding agent. Requires `npm install -g @mariozechner/pi-coding-agent`. Install with `pi install npm:tokenfactory-pi`",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mosquito/tokenfactory-pi.git"
+  },
+  "keywords": [
+    "pi",
+    "pi-extension",
+    "pi-package",
+    "nebius",
+    "tokenfactory",
+    "llm",
+    "coding-agent"
+  ],
+  "pi": {
+    "extensions": [
+      "./dist/index.js"
+    ]
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.9.3"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "prepare": "npm run build"
+  }
+}
