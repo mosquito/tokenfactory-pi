@@ -2,13 +2,13 @@
 
 [Nebius Token Factory](https://tokenfactory.nebius.com/) provider extension for [pi coding agent](https://pi.dev).
 
-Fetches the current model catalog from the Token Factory API on startup and registers all tool-capable models. No changes to pi-mono required.
+Fetches the current model catalog from the Token Factory API on startup and registers all tool-capable text models. No pi core changes required.
 
 ## Prerequisites
 
 ```bash
 # Install pi coding agent globally (required)
-npm install -g @mariozechner/pi-coding-agent
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 ```
 
 ## Installation
@@ -57,3 +57,5 @@ On startup the extension:
 
 All models use the `openai-completions` API with
 `compat: { supportsDeveloperRole: false, maxTokensField: "max_tokens" }`.
+The registered provider resolves auth from `$NEBIUS_API_KEY`, matching pi's current custom-provider config syntax.
+This is important: a literal `NEBIUS_API_KEY` value would be sent as the bearer token and Token Factory returns `401`.

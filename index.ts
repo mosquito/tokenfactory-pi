@@ -13,11 +13,13 @@
  *   pi -e /path/to/tokenfactory-pi --provider nebius --model Qwen/Qwen3-32B
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { gunzipSync } from "node:zlib";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const PROVIDER_NAME = "nebius";
 const BASE_URL = "https://api.tokenfactory.nebius.com/v1";
 const ENV_VAR = "NEBIUS_API_KEY";
+const API_KEY_CONFIG = `$${ENV_VAR}`;
 
 // ============================================================================
 // Token Factory API types
@@ -40,6 +42,25 @@ interface TokenFactoryResponse {
 // Helpers
 // ============================================================================
 
+function isGzip(bytes: Buffer): boolean {
+	return bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+}
+
+async function readTokenFactoryResponse(res: Response): Promise<TokenFactoryResponse> {
+	const bytes = Buffer.from(await res.arrayBuffer());
+	const body = (isGzip(bytes) ? gunzipSync(bytes) : bytes).toString("utf8");
+	try {
+		return JSON.parse(body) as TokenFactoryResponse;
+	} catch {
+		const preview = body.slice(0, 200).replace(/\s+/g, " ");
+		throw new Error(
+			`Invalid Token Factory JSON response (${res.status} ${res.statusText}, ` +
+				`content-type=${res.headers.get("content-type") || "unknown"}, ` +
+				`content-encoding=${res.headers.get("content-encoding") || "none"}): ${preview}`,
+		);
+	}
+}
+
 function isToolCapableTextModel(m: TokenFactoryModel): boolean {
 	const features = m.supported_features || [];
 	const modality = m.architecture?.modality || "";
@@ -53,11 +74,13 @@ function parseInputModalities(modality: string): ("text" | "image")[] {
 }
 
 function parseCostPerMillion(raw: string | undefined): number {
-	return parseFloat(raw || "0") * 1_000_000;
+	const parsed = parseFloat(raw || "0");
+	return Number.isNaN(parsed) ? 0 : parsed * 1_000_000;
 }
 
-function isReasoningModel(id: string): boolean {
-	return /(-R1|-Thinking|QwQ)/.test(id);
+function isReasoningModel(m: TokenFactoryModel): boolean {
+	const features = m.supported_features || [];
+	return features.includes("reasoning") || /(-R1|-Thinking|QwQ)/.test(m.id);
 }
 
 // ============================================================================
@@ -73,13 +96,16 @@ export default async function (pi: ExtensionAPI) {
 	let response: TokenFactoryResponse;
 	try {
 		const res = await fetch(`${BASE_URL}/models?verbose=true`, {
-			headers: { Authorization: `Bearer ${apiKey}` },
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+				"Accept-Encoding": "identity",
+			},
 		});
 		if (!res.ok) {
 			console.warn(`[${PROVIDER_NAME}] API returned ${res.status}: ${res.statusText}`);
 			return;
 		}
-		response = (await res.json()) as TokenFactoryResponse;
+		response = await readTokenFactoryResponse(res);
 	} catch (error) {
 		console.warn(`[${PROVIDER_NAME}] Failed to fetch models:`, error);
 		return;
@@ -101,14 +127,16 @@ export default async function (pi: ExtensionAPI) {
 		compat: { supportsDeveloperRole: boolean; maxTokensField: "max_tokens" };
 	}> = [];
 	for (const m of response.data) {
+		if (!m.id || m.id.trim() === "") continue;
 		if (!isToolCapableTextModel(m)) continue;
 
 		const modality = m.architecture?.modality || "";
+		const contextLength = m.context_length && m.context_length > 0 ? m.context_length : 131072;
 
 		models.push({
 			id: m.id,
 			name: m.name || m.id,
-			reasoning: isReasoningModel(m.id),
+			reasoning: isReasoningModel(m),
 			input: parseInputModalities(modality),
 			cost: {
 				input: parseCostPerMillion(m.pricing?.prompt),
@@ -116,8 +144,8 @@ export default async function (pi: ExtensionAPI) {
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: m.context_length || 131072,
-			maxTokens: Math.min(m.context_length || 32768, 32768),
+			contextWindow: contextLength,
+			maxTokens: Math.min(contextLength, 32768),
 			compat: {
 				supportsDeveloperRole: false,
 				maxTokensField: "max_tokens" as const,
@@ -127,12 +155,15 @@ export default async function (pi: ExtensionAPI) {
 
 	pi.registerProvider(PROVIDER_NAME, {
 		baseUrl: BASE_URL,
-		apiKey: ENV_VAR,
+		apiKey: API_KEY_CONFIG,
 		api: "openai-completions",
+		headers: {
+			"Accept-Encoding": "identity",
+		},
 		models,
 	});
 
-	// /nebius-models command to list and select a model
+	// /nebius-models command to list available models
 	pi.registerCommand("nebius-models", {
 		description: "List available Nebius Token Factory models",
 		handler: async (_args, ctx) => {
