@@ -163,24 +163,4 @@ export default async function (pi: ExtensionAPI) {
 		models,
 	});
 
-	// /nebius-models command to list available models
-	pi.registerCommand("nebius-models", {
-		description: "List available Nebius Token Factory models",
-		handler: async (_args, ctx) => {
-			if (models.length === 0) {
-				ctx.ui.notify("No Nebius models available", "warning");
-				return;
-			}
-			const items = models
-				.sort((a, b) => a.id.localeCompare(b.id))
-				.map((m) => {
-					const tags = [];
-					if (m.reasoning) tags.push("reasoning");
-					if (m.input.includes("image")) tags.push("vision");
-					const suffix = tags.length > 0 ? ` (${tags.join(", ")})` : "";
-					return `${m.id}${suffix}`;
-				});
-			await ctx.ui.select(`Nebius Token Factory — ${models.length} models`, items);
-		},
-	});
 }

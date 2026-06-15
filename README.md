@@ -32,7 +32,7 @@ export NEBIUS_API_KEY=your-key-here
 pi --list-models | grep nebius
 ```
 
-Once running in interactive mode, use `/nebius-models` to list all available models.
+Once running in interactive mode, use Pi's built-in `/model` command to select a Nebius model.
 
 ## Development
 
