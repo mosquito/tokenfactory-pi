@@ -1,7 +1,7 @@
 {
   "name": "tokenfactory-pi",
-  "version": "0.2.4",
-  "description": "Nebius Token Factory provider extension for pi coding agent. Requires `npm install -g @mariozechner/pi-coding-agent`. Install with `pi install npm:tokenfactory-pi`",
+  "version": "0.2.7",
+  "description": "Nebius Token Factory provider extension for pi coding agent. Requires `npm install -g --ignore-scripts @earendil-works/pi-coding-agent`. Install with `pi install npm:tokenfactory-pi`",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -25,7 +25,7 @@
     ]
   },
   "peerDependencies": {
-    "@mariozechner/pi-coding-agent": "*"
+    "@earendil-works/pi-coding-agent": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
