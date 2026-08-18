@@ -1,6 +1,6 @@
 {
   "name": "tokenfactory-pi",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "description": "Nebius Token Factory provider extension for pi coding agent. Requires `npm install -g --ignore-scripts @earendil-works/pi-coding-agent`. Install with `pi install npm:tokenfactory-pi`",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
