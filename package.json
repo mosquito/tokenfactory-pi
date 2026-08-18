@@ -41,6 +41,7 @@
     "clean": "rm -rf dist",
     "build": "tsc",
     "check": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs",
     "prepare": "npm run build"
   }
 }
